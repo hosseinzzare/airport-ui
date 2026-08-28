@@ -31,10 +31,13 @@ passenger site as an ordinary visitor at the same time.
 
 ## Demo accounts
 
-| Surface   | Email                  | Password  |
-|-----------|------------------------|-----------|
-| Passenger | passenger@emirates.com | passenger |
-| Operations| admin@dxb.gov.ae       | admin     |
+| Surface    | Email                  | Password   |
+|------------|------------------------|------------|
+| Passenger  | passenger@emirates.com | `123`      |
+| Operations | admin@dxb.gov.ae       | `admin`    |
+| Tower only | tower@dxb.gov.ae       | `tower`    |
+| Ground ops | ops@dxb.gov.ae         | `ops`      |
+| CrewFlow   | crew@dxb.gov.ae        | `Crew123!` |
 
 These are seeded into the browser on first load. They are demo credentials for a
 prototype and protect nothing — do not reuse them anywhere real, and do not put
