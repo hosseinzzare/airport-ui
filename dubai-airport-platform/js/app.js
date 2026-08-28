@@ -294,8 +294,17 @@ function initHashRouter() {
   handleHashRoute()
 }
 
+// The deployment serves the same shell at two URLs: / is the passenger site and
+// /admin is the Operations Control Center. With no hash present, the pathname is
+// what decides which surface opens; the hash takes over from then on.
+function defaultRouteForPath() {
+  return window.location.pathname.replace(/\/+$/, '').endsWith('/admin')
+    ? 'admin'
+    : 'landing'
+}
+
 function handleHashRoute() {
-  const hash = window.location.hash.replace('#', '') || 'landing'
+  const hash = window.location.hash.replace('#', '') || defaultRouteForPath()
   const allowed = [
     'landing',
     'signin',
@@ -307,7 +316,7 @@ function handleHashRoute() {
     'flight-status',
     'portal',
   ]
-  switchRoute(allowed.includes(hash) ? hash : 'landing')
+  switchRoute(allowed.includes(hash) ? hash : defaultRouteForPath())
 }
 
 function switchRoute(route) {

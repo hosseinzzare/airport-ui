@@ -1,0 +1,7 @@
+.git
+.github
+.claude
+docs
+node_modules
+*.md
+!dubai-airport-platform/**/*.md
