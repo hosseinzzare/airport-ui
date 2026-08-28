@@ -294,13 +294,15 @@ function initHashRouter() {
   handleHashRoute()
 }
 
-// The deployment serves the same shell at two URLs: / is the passenger site and
-// /occ is the Operations Control Center. With no hash present, the pathname is
-// what decides which surface opens; the hash takes over from then on.
-// The path is /occ rather than /admin so this app can never be confused with,
-// or collide with, the admin panel of anything else hosted alongside it.
+// The platform is mounted under /dxb on a domain it shares with another app, and
+// the same shell answers two URLs:
+//   /dxb        the passenger site
+//   /dxb-admin  the Operations Control Center
+// With no hash present the pathname decides which surface opens; the hash takes
+// over from then on. The operations path is deliberately /dxb-admin and not
+// /admin, because the host domain already has an /admin of its own.
 function defaultRouteForPath() {
-  return window.location.pathname.replace(/\/+$/, '').endsWith('/occ')
+  return /\/dxb-admin\/?$/.test(window.location.pathname)
     ? 'admin'
     : 'landing'
 }

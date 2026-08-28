@@ -3,9 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- The same shell is served at / and at /admin, so relative asset paths are
-       resolved from the site root rather than from the current URL. -->
-  <base href="/">
+  <!-- The platform is mounted under /dxb on the shared domain, and the same shell
+       answers both /dxb and /dxb-admin. Pinning the base here keeps every relative
+       asset path and runtime fragment fetch resolving against that mount point
+       rather than against whichever URL the visitor happens to be on. -->
+  <base href="/dxb/">
   <title>DXB Airport Platform · Customer & OCC</title>
   <meta name="description" content="Emirates customer portal and Dubai Airport Operations Control Center">
   <link rel="stylesheet" href="css/design-system.css">
