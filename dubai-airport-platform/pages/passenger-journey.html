@@ -171,6 +171,135 @@
   (function () {
     const PJ_STORE_KEY = 'DXB_PASSENGER_BOOKINGS';
 
+    /* ---------- Demo passengers ----------
+       An empty operations board tells a duty officer nothing: they cannot see what
+       the filters do, whether the KPIs add up, or how a checked-in row differs from
+       a pending one. These six records seed the shared store the first time the
+       module is opened so the board arrives populated.
+
+       Seeding runs only when the store key has never existed. Once a real passenger
+       books through the portal, or an operator clears the board deliberately, the
+       key is present and these are never written again. Records use the same shape
+       the Passenger Portal writes, so nothing downstream can tell them apart. */
+    const PJ_SEEDED_FLAG = 'DXB_PASSENGER_BOOKINGS_SEEDED';
+
+    const PJ_DEMO_BOOKINGS = [
+      {
+        ref: 'EK-48217', name: 'Omar Al-Farsi', flight: 'EK 073', from: 'DXB', to: 'CDG',
+        route: 'DXB → CDG', destination: 'Paris', date: 'Wed, 26 Aug', dateISO: '2026-08-26',
+        cabinClass: 'Business', fare: 1994, seatPreference: 'Window', mealPreference: 'Halal',
+        seat: '3A', gate: 'B08', boarding: '07:30', terminal: 'Terminal 3',
+        flightStatus: 'On Time', ticketNumber: '176-4028917335',
+        arrivalWeather: { icon: '⛅', temp: 23, desc: 'Partly cloudy', advice: 'Pack light layers', landsAt: '12:55', landsOn: 'Wed, 26 Aug' },
+        payment: {
+          status: 'Paid', method: 'Visa ending 4242', methodId: 'card', currency: 'USD',
+          total: 1994, totalAED: 7322, baseFare: 1680, surcharge: 147, taxes: 33, extras: 134,
+          milesUsed: 0, fareBrand: 'Business Flex', refundable: true, baggage: '40 kg checked',
+          idempotencyKey: 'pay_seed_ek48217', authCode: 'QJ7T2M', ticketNumber: '176-4028917335',
+          paidAt: '2026-08-24T09:12:41.000Z'
+        },
+        status: 'Checked-In — Boarding Pass Issued',
+        bookedAt: '2026-08-24T09:12:41.000Z', checkedInAt: '2026-08-25T07:31:08.000Z'
+      },
+      {
+        ref: 'EK-73904', name: 'Priya Raghunathan', flight: 'EK 507', from: 'DXB', to: 'BOM',
+        route: 'DXB → BOM', destination: 'Mumbai', date: 'Wed, 26 Aug', dateISO: '2026-08-26',
+        cabinClass: 'Economy', fare: 322, seatPreference: 'Aisle', mealPreference: 'Vegetarian',
+        seat: '31C', gate: 'C14', boarding: '09:15', terminal: 'Terminal 3',
+        flightStatus: 'On Time', ticketNumber: '176-5591340228',
+        arrivalWeather: { icon: '🌦️', temp: 30, desc: 'Monsoon showers', advice: 'Umbrella and light, breathable clothes', landsAt: '14:35', landsOn: 'Wed, 26 Aug' },
+        payment: {
+          status: 'Paid', method: 'Apple Pay', methodId: 'applepay', currency: 'USD',
+          total: 322, totalAED: 1183, baseFare: 260, surcharge: 29, taxes: 33, extras: 0,
+          milesUsed: 0, fareBrand: 'Economy Saver', refundable: false, baggage: '25 kg checked',
+          idempotencyKey: 'pay_seed_ek73904', authCode: 'B4KX9P', ticketNumber: '176-5591340228',
+          paidAt: '2026-08-23T18:44:02.000Z'
+        },
+        status: 'Checked-In — Boarding Pass Issued',
+        bookedAt: '2026-08-23T18:44:02.000Z', checkedInAt: '2026-08-25T09:02:55.000Z'
+      },
+      {
+        ref: 'EK-19566', name: 'James Whitfield', flight: 'EK 001', from: 'DXB', to: 'LHR',
+        route: 'DXB → LHR', destination: 'London', date: 'Thu, 27 Aug', dateISO: '2026-08-27',
+        cabinClass: 'Premium Economy', fare: 900, seatPreference: 'Window', mealPreference: 'Gluten-Free',
+        seat: '—', gate: 'A12', boarding: '07:45', terminal: 'Terminal 3',
+        flightStatus: 'On Time', ticketNumber: '176-7712058463',
+        arrivalWeather: { icon: '🌧️', temp: 21, desc: 'Light rain', advice: 'Umbrella and light layers', landsAt: '12:50', landsOn: 'Thu, 27 Aug' },
+        payment: {
+          status: 'Paid', method: 'Visa ending 4242', methodId: 'card', currency: 'USD',
+          total: 900, totalAED: 3305, baseFare: 788, surcharge: 79, taxes: 33, extras: 0,
+          milesUsed: 0, fareBrand: 'Premium Economy Flex', refundable: true, baggage: '35 kg checked',
+          idempotencyKey: 'pay_seed_ek19566', authCode: 'ZR3V8D', ticketNumber: '176-7712058463',
+          paidAt: '2026-08-25T11:20:17.000Z'
+        },
+        status: 'Booked — Auto Check-in Pending',
+        bookedAt: '2026-08-25T11:20:17.000Z'
+      },
+      {
+        ref: 'EK-60381', name: 'Fatima Al-Zahrani', flight: 'EK 817', from: 'DXB', to: 'RUH',
+        route: 'DXB → RUH', destination: 'Riyadh', date: 'Wed, 26 Aug', dateISO: '2026-08-26',
+        cabinClass: 'Economy', fare: 264, seatPreference: 'Window', mealPreference: 'Halal',
+        seat: '18A', gate: 'C03', boarding: '08:30', terminal: 'Terminal 3',
+        flightStatus: 'Delayed', ticketNumber: '176-3364827190',
+        arrivalWeather: { icon: '🔥', temp: 43, desc: 'Very hot', advice: 'Stay hydrated and avoid the midday sun', landsAt: '11:30', landsOn: 'Wed, 26 Aug' },
+        payment: {
+          status: 'Paid', method: 'Skywards Miles + Cash', methodId: 'miles', currency: 'USD',
+          total: 264, totalAED: 970, baseFare: 210, surcharge: 20, taxes: 33, extras: 46,
+          milesUsed: 30000, fareBrand: 'Economy Saver', refundable: false, baggage: '25 kg checked',
+          idempotencyKey: 'pay_seed_ek60381', authCode: 'HW5N1C', ticketNumber: '176-3364827190',
+          paidAt: '2026-08-22T14:07:33.000Z'
+        },
+        status: 'Checked-In — Boarding Pass Issued',
+        bookedAt: '2026-08-22T14:07:33.000Z', checkedInAt: '2026-08-25T08:34:12.000Z'
+      },
+      {
+        ref: 'EK-85142', name: 'Chen Wei-Lin', flight: 'EK 201', from: 'DXB', to: 'JFK',
+        route: 'DXB → JFK', destination: 'New York', date: 'Thu, 27 Aug', dateISO: '2026-08-27',
+        cabinClass: 'First', fare: 8226, seatPreference: 'Window', mealPreference: 'Standard',
+        seat: '1A', gate: 'A22', boarding: '07:55', terminal: 'Terminal 3',
+        flightStatus: 'On Time', ticketNumber: '176-9048163752',
+        arrivalWeather: { icon: '☀️', temp: 29, desc: 'Warm and humid', advice: 'Stay hydrated', landsAt: '14:25', landsOn: 'Thu, 27 Aug' },
+        payment: {
+          status: 'Paid', method: 'Visa ending 4242', methodId: 'card', currency: 'USD',
+          total: 8226, totalAED: 30210, baseFare: 7840, surcharge: 353, taxes: 33, extras: 0,
+          milesUsed: 0, fareBrand: 'First Flex', refundable: true, baggage: '50 kg checked',
+          idempotencyKey: 'pay_seed_ek85142', authCode: 'YT8L4Q', ticketNumber: '176-9048163752',
+          paidAt: '2026-08-25T06:55:29.000Z'
+        },
+        status: 'Checked-In — Boarding Pass Issued',
+        bookedAt: '2026-08-25T06:55:29.000Z', checkedInAt: '2026-08-25T10:15:44.000Z'
+      },
+      {
+        ref: 'EK-27630', name: 'Mariam Haddad', flight: 'EK 927', from: 'DXB', to: 'CAI',
+        route: 'DXB → CAI', destination: 'Cairo', date: 'Fri, 28 Aug', dateISO: '2026-08-28',
+        cabinClass: 'Economy', fare: 369, seatPreference: 'Aisle', mealPreference: 'Vegan',
+        seat: '—', gate: 'B21', boarding: '13:40', terminal: 'Terminal 3',
+        flightStatus: 'On Time', ticketNumber: '176-2185903471',
+        arrivalWeather: { icon: '🔥', temp: 38, desc: 'Very hot', advice: 'Stay hydrated and avoid the midday sun', landsAt: '17:05', landsOn: 'Fri, 28 Aug' },
+        payment: {
+          status: 'Paid', method: 'Google Pay', methodId: 'googlepay', currency: 'USD',
+          total: 369, totalAED: 1355, baseFare: 300, surcharge: 36, taxes: 33, extras: 0,
+          milesUsed: 0, fareBrand: 'Economy Saver', refundable: false, baggage: '25 kg checked',
+          idempotencyKey: 'pay_seed_ek27630', authCode: 'DM6R7S', ticketNumber: '176-2185903471',
+          paidAt: '2026-08-25T12:48:06.000Z'
+        },
+        status: 'Booked — Auto Check-in Pending',
+        bookedAt: '2026-08-25T12:48:06.000Z'
+      }
+    ];
+
+    function pjSeedIfEmpty() {
+      // Absence of the key means the board has never been populated. An existing
+      // key — even holding an empty array — is a deliberate state we must respect.
+      if (localStorage.getItem(PJ_STORE_KEY) !== null) return;
+      try {
+        localStorage.setItem(PJ_STORE_KEY, JSON.stringify(PJ_DEMO_BOOKINGS));
+        localStorage.setItem(PJ_SEEDED_FLAG, new Date().toISOString());
+      } catch (e) {
+        /* storage unavailable — the board simply stays empty */
+      }
+    }
+
     function pjLoad() {
       try {
         return JSON.parse(localStorage.getItem(PJ_STORE_KEY)) || [];
@@ -292,6 +421,7 @@
     window.pjRefresh = pjRefresh;
     window.pjOpenPortal = pjOpenPortal;
 
+    pjSeedIfEmpty();
     pjRender();
   })();
 </script>
