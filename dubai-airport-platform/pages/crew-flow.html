@@ -294,6 +294,22 @@
         <div class="co-roster" id="co-roster"></div>
       </section>
 
+      <!-- Passengers checked in for this flight, read from the passenger portal.
+           Cabin crew need the meal counts and the assistance requests before
+           boarding, which is the whole reason this panel exists. -->
+      <section class="co-card">
+        <div class="co-between co-wrap" style="gap: 10px;">
+          <div>
+            <h2 class="co-section-title">Passenger load</h2>
+            <p class="co-help" id="co-pax-help">Bookings taken on the passenger portal for this flight.</p>
+          </div>
+          <span class="co-chip co-chip-neutral" id="co-pax-count"></span>
+        </div>
+        <div id="co-pax-summary" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px;"></div>
+        <div id="co-pax-meals" style="margin-top: 12px;"></div>
+        <div id="co-pax-list" style="margin-top: 12px;"></div>
+      </section>
+
       <section class="co-card">
         <div class="co-between co-wrap" style="gap: 10px;">
           <div>
@@ -803,6 +819,99 @@
       }).join('')
     }
 
+    /* ---------- Passenger load ----------
+       The passenger portal writes every booking and check-in to its own store.
+       Crew never saw any of it, so a cabin that was filling up looked identical
+       to an empty one from here. This reads that store, keeps only the bookings
+       for the flight this crew is operating, and reports the two things that
+       change what crew do before boarding: the meal counts galley has to load,
+       and any passenger who needs assistance at the door. */
+    var PAX_STORE_KEY = 'DXB_PASSENGER_BOOKINGS'
+
+    function readPassengers() {
+      var all = safeParse(localStorage.getItem(PAX_STORE_KEY))
+      if (!Array.isArray(all)) return []
+      var flightNumber = (state.flight && state.flight.number) || ''
+      return all.filter(function (booking) {
+        return booking && booking.flight === flightNumber
+      })
+    }
+
+    function isPassengerCheckedIn(booking) {
+      return typeof booking.status === 'string' && booking.status.indexOf('Checked-In') === 0
+    }
+
+    function countBy(items, pick) {
+      var counts = {}
+      items.forEach(function (item) {
+        var key = pick(item) || 'Standard'
+        counts[key] = (counts[key] || 0) + 1
+      })
+      return counts
+    }
+
+    function renderPassengers() {
+      var bookings = readPassengers()
+      var checkedIn = bookings.filter(isPassengerCheckedIn)
+
+      document.getElementById('co-pax-count').textContent =
+        bookings.length + (bookings.length === 1 ? ' booked' : ' booked')
+      document.getElementById('co-pax-help').textContent =
+        'Bookings taken on the passenger portal for ' + ((state.flight && state.flight.number) || 'this flight') + '.'
+
+      var summaryHost = document.getElementById('co-pax-summary')
+      var mealsHost = document.getElementById('co-pax-meals')
+      var listHost = document.getElementById('co-pax-list')
+
+      if (!bookings.length) {
+        summaryHost.innerHTML = ''
+        mealsHost.innerHTML = ''
+        listHost.innerHTML =
+          '<p class="co-help">No passengers have booked this flight yet. Bookings appear here as soon as ' +
+          'someone books or checks in on the passenger portal.</p>'
+        return
+      }
+
+      var cabins = countBy(bookings, function (b) { return b.cabinClass })
+      summaryHost.innerHTML =
+        '<span class="co-chip co-chip-neutral">' + checkedIn.length + ' checked in</span>' +
+        '<span class="co-chip co-chip-neutral">' + (bookings.length - checkedIn.length) + ' pending</span>' +
+        Object.keys(cabins).map(function (cabin) {
+          return '<span class="co-chip co-chip-neutral">' + escapeHtml(cabin) + ': ' + cabins[cabin] + '</span>'
+        }).join('')
+
+      // Galley loads to the special meals, so anything that is not Standard is
+      // what actually matters here.
+      var meals = countBy(bookings, function (b) { return b.mealPreference })
+      var special = Object.keys(meals).filter(function (meal) { return meal !== 'Standard' })
+      mealsHost.innerHTML =
+        '<p class="co-help" style="margin-bottom: 6px;"><strong>Galley — special meals</strong></p>' +
+        (special.length
+          ? '<div style="display: flex; flex-wrap: wrap; gap: 8px;">' +
+            special.map(function (meal) {
+              return '<span class="co-chip co-chip-warn">' + escapeHtml(meal) + ' × ' + meals[meal] + '</span>'
+            }).join('') +
+            '</div>'
+          : '<p class="co-help">No special meals ordered — standard service only.</p>')
+
+      listHost.innerHTML =
+        '<p class="co-help" style="margin-bottom: 6px;"><strong>Manifest</strong></p>' +
+        bookings.map(function (b) {
+          var seated = isPassengerCheckedIn(b)
+          return '' +
+            '<div class="co-between co-wrap" style="gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--border-color);">' +
+              '<div>' +
+                '<p style="font-weight: 700; font-size: 14px;">' + escapeHtml(b.name) + '</p>' +
+                '<span class="co-help">' + escapeHtml(b.ref) + ' · ' + escapeHtml(b.cabinClass) +
+                  ' · ' + escapeHtml(b.mealPreference || 'Standard') + '</span>' +
+              '</div>' +
+              '<span class="co-chip ' + (seated ? 'co-chip-ok' : 'co-chip-neutral') + '">' +
+                (seated ? 'Seat ' + escapeHtml(b.seat) : 'Not checked in') +
+              '</span>' +
+            '</div>'
+        }).join('')
+    }
+
     function render() {
       renderFlight()
       renderKpis()
@@ -810,6 +919,7 @@
       renderRoster()
       renderMemberDetail()
       renderIssues()
+      renderPassengers()
       renderStandby()
       renderAudit()
       document.getElementById('co-sync-badge').textContent = '● Synced ' + formatDate(state.updatedAt)
@@ -972,6 +1082,10 @@
     })
 
     window.addEventListener('storage', function (event) {
+      if (event.key === PAX_STORE_KEY) {
+        renderPassengers()
+        return
+      }
       if (event.key !== OPS_KEY && event.key !== JOURNEY_KEY) return
       state = readState()
       render()
