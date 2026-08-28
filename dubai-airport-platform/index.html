@@ -30,7 +30,7 @@
         <button type="button" data-customer-route="my-trips" onclick="switchRoute('my-trips')">My Trips</button>
         <button type="button" data-customer-route="manage" onclick="switchRoute('manage')">Manage booking</button>
         <button type="button" data-customer-route="flight-status" onclick="switchRoute('flight-status')">Flight status</button>
-        <button type="button" onclick="window.location.href='./crew-app/#/login'">CrewFlow</button>
+        <button type="button" onclick="window.location.href = new URL('crew-app/#/login', document.baseURI).href">CrewFlow</button>
         <button type="button" id="btn-customer-logout">Sign out</button>
       </div>
     </div>
@@ -61,7 +61,7 @@
           <a class="emirates-nav-item" onclick="switchRoute('portal')">CHECK-IN</a>
           <a class="emirates-nav-item" onclick="switchRoute('flight-status')">FLIGHT STATUS</a>
           <a class="emirates-nav-item" onclick="switchRoute('signin')" style="color: var(--color-gold);">SKYWARDS</a>
-          <a class="emirates-nav-item" onclick="window.location.href='./crew-app/#/crew'">CREW</a>
+          <a class="emirates-nav-item" onclick="window.location.href = new URL('crew-app/#/crew', document.baseURI).href">CREW</a>
         </nav>
       </div>
       <div class="emirates-user-actions" id="user-actions-container">

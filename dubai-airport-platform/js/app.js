@@ -572,7 +572,7 @@ function handleCustomerLogin() {
       employeeId: 'EK-CC-2847'
     }
     localStorage.setItem('crewflow_journey', JSON.stringify(crewJourney))
-    window.location.href = './crew-app/#/crew'
+    window.location.href = new URL('crew-app/#/crew', document.baseURI).href
     return
   }
   const role = normalizeRole(user.role)

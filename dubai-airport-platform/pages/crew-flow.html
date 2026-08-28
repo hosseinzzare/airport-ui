@@ -941,10 +941,9 @@
         state = readState()
         render()
       } else if (action === 'open-app') {
-        var crewAppPath = window.location.pathname.indexOf('/pages/') !== -1
-          ? '../crew-app/#/crew'
-          : './crew-app/#/crew'
-        window.open(new URL(crewAppPath, window.location.href).href, '_blank')
+        // Anchored to the document base rather than the current URL, so the
+        // link lands inside the deployment's mount point from every surface.
+        window.open(new URL('crew-app/#/crew', document.baseURI).href, '_blank')
       } else if (action === 'select-crew' && id) {
         selectedCrewId = id
         renderRoster()
