@@ -295,10 +295,12 @@ function initHashRouter() {
 }
 
 // The deployment serves the same shell at two URLs: / is the passenger site and
-// /admin is the Operations Control Center. With no hash present, the pathname is
+// /occ is the Operations Control Center. With no hash present, the pathname is
 // what decides which surface opens; the hash takes over from then on.
+// The path is /occ rather than /admin so this app can never be confused with,
+// or collide with, the admin panel of anything else hosted alongside it.
 function defaultRouteForPath() {
-  return window.location.pathname.replace(/\/+$/, '').endsWith('/admin')
+  return window.location.pathname.replace(/\/+$/, '').endsWith('/occ')
     ? 'admin'
     : 'landing'
 }
